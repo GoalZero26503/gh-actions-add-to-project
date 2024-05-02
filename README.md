@@ -92,19 +92,16 @@ jobs:
 
 ### Further reading and additional resources
 
-- [actions/add-to-project](#actionsadd-to-project)
-  - [Current Status](#current-status)
-  - [Usage](#usage)
-    - [Examples](#examples)
-      - [Example Usage: Issue opened with labels `bug` OR `needs-triage`](#example-usage-issue-opened-with-labels-bug-or-needs-triage)
-      - [Example Usage: Adds all issues opened that do not include the label `bug` OR `needs-triage`](#example-usage-adds-all-issues-opened-that-do-not-include-the-label-bug-or-needs-triage)
-      - [Example Usage: Pull Requests labeled with `needs-review` and `size/XL`](#example-usage-pull-requests-labeled-with-needs-review-and-sizexl)
-    - [Further reading and additional resources](#further-reading-and-additional-resources)
-  - [Inputs](#inputs)
-  - [Supported Events](#supported-events)
-  - [Creating a PAT and adding it to your repository](#creating-a-pat-and-adding-it-to-your-repository)
-  - [Development](#development)
-  - [Publish to a distribution branch](#publish-to-a-distribution-branch)
+- [Current Status](#current-status)
+- [Usage](#usage)
+  - [Examples](#examples)
+  - [Further reading and additional resources](#further-reading-and-additional-resources)
+- [Inputs](#inputs)
+- [Supported Events](#supported-events)
+- [Creating a PAT and adding it to your repository](#creating-a-pat-and-adding-it-to-your-repository)
+- [Setting a specific status or column name to the project item](#setting-a-specific-status-or-column-name-to-the-project-item)
+- [Development](#development)
+- [Publish to a distribution branch](#publish-to-a-distribution-branch)
 - [License](#license)
 
 ## Inputs
@@ -116,6 +113,7 @@ jobs:
   _See [Creating a PAT and adding it to your repository](#creating-a-pat-and-adding-it-to-your-repository) for more details_
 - <a name="labeled">`labeled`</a> **(optional)** is a comma-separated list of labels used to filter applicable issues. When this key is provided, an issue must have _one_ of the labels in the list to be added to the project. Omitting this key means that any issue will be added.
 - <a name="labeled">`label-operator`</a> **(optional)** is the behavior of the labels filter, either `AND`, `OR` or `NOT` that controls if the issue should be matched with `all` `labeled` input or any of them, default is `OR`.
+- <a name="retry-limit">`retry-limit`</a> **(optional)** is the number of retries done to add an item to a board, default is 0.
 
 ## Supported Events
 

@@ -39,7 +39,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.mustGetOwnerTypeQuery = exports.addToProject = void 0;
+exports.mustGetOwnerTypeQuery = exports.withRetries = exports.addToProject = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const urlParse = /\/(?<ownerType>orgs|users)\/(?<ownerName>[^/]+)\/projects\/(?<projectNumber>\d+)/;
@@ -54,6 +54,8 @@ function addToProject() {
             .map(l => l.trim().toLowerCase())
             .filter(l => l.length > 0)) !== null && _a !== void 0 ? _a : [];
         const labelOperator = core.getInput('label-operator').trim().toLocaleLowerCase();
+        const inputRetryLimit = core.getInput('retry-limit');
+        const retryLimit = inputRetryLimit ? Number(inputRetryLimit) : 0;
         const octokit = github.getOctokit(ghToken);
         const issue = (_b = github.context.payload.issue) !== null && _b !== void 0 ? _b : github.context.payload.pull_request;
         const issueLabels = ((_c = issue === null || issue === void 0 ? void 0 : issue.labels) !== null && _c !== void 0 ? _c : []).map((l) => l.name.toLowerCase());
@@ -111,40 +113,52 @@ function addToProject() {
         // add a project item. Otherwise, we add a draft issue.
         if (issueOwnerName === projectOwnerName) {
             core.info('Creating project item');
-            const addResp = yield octokit.graphql(`mutation addIssueToProject($input: AddProjectV2ItemByIdInput!) {
-        addProjectV2ItemById(input: $input) {
-          item {
-            id
+            const addResp = yield withRetries(0, retryLimit, () => octokit.graphql(`mutation addIssueToProject($input: AddProjectV2ItemByIdInput!) {
+          addProjectV2ItemById(input: $input) {
+            item {
+              id
+            }
           }
-        }
-      }`, {
+        }`, {
                 input: {
                     projectId,
                     contentId,
                 },
-            });
+            }));
             core.setOutput('itemId', addResp.addProjectV2ItemById.item.id);
         }
         else {
             core.info('Creating draft issue in project');
-            const addResp = yield octokit.graphql(`mutation addDraftIssueToProject($projectId: ID!, $title: String!) {
-        addProjectV2DraftIssue(input: {
-          projectId: $projectId,
-          title: $title
-        }) {
-          projectItem {
-            id
+            const addResp = yield withRetries(0, retryLimit, () => octokit.graphql(`mutation addDraftIssueToProject($projectId: ID!, $title: String!) {
+          addProjectV2DraftIssue(input: {
+            projectId: $projectId,
+            title: $title
+          }) {
+            projectItem {
+              id
+            }
           }
-        }
-      }`, {
+        }`, {
                 projectId,
                 title: issue === null || issue === void 0 ? void 0 : issue.html_url,
-            });
+            }));
             core.setOutput('itemId', addResp.addProjectV2DraftIssue.projectItem.id);
         }
     });
 }
 exports.addToProject = addToProject;
+function withRetries(retryNumber, retryLimit, callback) {
+    try {
+        return callback();
+    }
+    catch (err) {
+        if (retryNumber < retryLimit)
+            return withRetries(retryNumber + 1, retryLimit, callback);
+        else
+            throw err;
+    }
+}
+exports.withRetries = withRetries;
 function mustGetOwnerTypeQuery(ownerType) {
     const ownerTypeQuery = ownerType === 'orgs' ? 'organization' : ownerType === 'users' ? 'user' : null;
     if (!ownerTypeQuery) {
